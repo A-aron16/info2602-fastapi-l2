@@ -105,7 +105,7 @@ def delete_user(
         db.commit()
         print(f'{username} deleted')
 
-# --- EXERCISES 1 & 2 ---
+#  EXERCISES 1 and 2
 
 @cli.command()
 def search_user(
