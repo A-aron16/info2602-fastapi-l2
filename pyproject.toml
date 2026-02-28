@@ -14,7 +14,7 @@ authors = [
 dependencies = [
     "fastapi[standard]",
     "httpx",
-    "pwdlib",
+    "pwdlib[argon2]",
     "pytest-asyncio",
     "pytest",
     "ruff",
