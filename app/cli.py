@@ -75,7 +75,7 @@ def create_user(
     password: str = typer.Argument(..., help="The raw password, which will be hashed.")
 ):
     """
-    Creates a new user account in the database. Fails gracefully if 
+    Creates a new user account in the database will fails if 
     the username or email already exists.
     """
     with get_session() as db:
