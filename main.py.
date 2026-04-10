@@ -1,0 +1,294 @@
+HTML Crash Course
+The HTML file has 3 fixed parts that never change and 1 part that changes every exam.
+
+The Fixed Parts (copy blindly every exam)
+1 — The head (always identical)
+html<!doctype html>
+<html lang="en">
+  <head>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>LE App</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { display: flex; height: 100vh; flex-direction: column; overflow: hidden; }
+      main { flex: 1; display: flex; width: 100%; overflow: hidden; }
+      .panel { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid #ddd; }
+      .scroll-area { overflow-y: auto; flex: 1; padding: 6px 10px; }
+      .card { margin: 4px 0; }
+    </style>
+  </head>
+2 — The nav (only change the app name)
+html  <nav class="purple">
+    <div class="nav-wrapper" style="padding: 0 12px;">
+      <span class="brand-logo left" style="font-size:1.1em; line-height:56px;">
+        LE App — {{ current_user.username }}
+        <!--        ↑ only change "LE App" to the exam app name -->
+      </span>
+      <ul class="right">
+        <li><a href="/logout">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+3 — Flash messages (never change)
+html  {% with messages = get_flashed_messages(request) %}
+    {% if messages %}
+      <div style="padding: 4px 12px;">
+        {% for message in messages %}
+          <div class="card-panel blue lighten-5" style="margin:2px 0; padding:6px 12px;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+4 — Scripts at the bottom (never change)
+html  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>M.AutoInit();</script>
+</body>
+</html>
+
+The Part That Changes — Inside <main>
+This is where you build your panels. The exam figure tells you how many columns there are. Each column = one div with the class panel.
+
+The 5 Building Blocks
+These are the only things you ever build inside <main>. Mix and match depending on the exam.
+
+Block 1 — Loop over a list of items (left panel)
+html<div class="panel" style="width: 30%;">
+  <h6 style="padding:8px 12px; margin:0; font-weight:bold;">Albums</h6>
+  <!--                                                         ↑ change heading -->
+  <div class="scroll-area">
+    {% for album in albums %}
+    <!--        ↑ change to your variable name -->
+      <div class="card">
+        <div class="card-content">
+          <p><strong>{{ album.title }}</strong></p>
+          <!--              ↑ your field name -->
+          <p class="grey-text">{{ album.artist }}</p>
+          <!--                      ↑ second field or remove -->
+          <a href="/album/{{ album.id }}" class="btn-small purple waves-effect">View</a>
+          <!--           ↑ your route    ↑ your id -->
+        </div>
+      </div>
+    {% else %}
+      <p style="color:grey; padding:10px;">Nothing here yet.</p>
+    {% endfor %}
+  </div>
+</div>
+
+Block 2 — Show children of selected parent (middle panel)
+html<div class="panel" style="width: 38%;">
+  <h6 style="padding:8px 12px; margin:0; font-weight:bold;">
+    {% if active_album %}{{ active_album.title }}{% else %}Select an album{% endif %}
+    <!--       ↑ your active variable                    ↑ your field     -->
+  </h6>
+  <div class="scroll-area">
+    {% if active_album %}
+      {% for track in active_album.tracks %}
+      <!--   ↑ child var   ↑ parent     ↑ relationship field name -->
+        <div class="card">
+          <div class="card-content" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>{{ track.title }}</span>
+            <!--        ↑ child field -->
+            <a href="/track/{{ track.id }}" class="btn-small purple waves-effect">View</a>
+            <!--            ↑ your route -->
+          </div>
+        </div>
+      {% else %}
+        <p style="color:grey;">No tracks yet.</p>
+      {% endfor %}
+    {% else %}
+      <p style="color:grey; padding:10px;">Select something from the left.</p>
+    {% endif %}
+  </div>
+</div>
+
+Block 3 — Add item form
+html<form method="POST" action="/track/{{ active_track.id }}/comment">
+<!--                         ↑ your POST route -->
+  <div style="display:flex; gap:8px; align-items:center; padding:8px 10px;">
+    <div class="input-field" style="flex:1; margin:0;">
+      <input type="text" id="comment_text" name="text" required>
+      <!--                                       ↑ must match Form() param in route -->
+      <label for="comment_text">Write a comment...</label>
+      <!--                                      ↑ change placeholder -->
+    </div>
+    <button class="btn purple waves-effect" type="submit">Add</button>
+  </div>
+</form>
+
+Block 4 — List with delete button (right panel)
+html<div class="scroll-area">
+  <ul class="collection" style="margin:0; border:none;">
+    {% for comment in active_track.comments %}
+    <!--   ↑ your var   ↑ active item  ↑ relationship field -->
+      <li class="collection-item" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <strong>{{ comment.user.username }}:</strong> {{ comment.text }}
+          <!--                ↑ who wrote it                    ↑ content field -->
+        </div>
+        {% if comment.user_id == current_user.id %}
+        <!--          ↑ only show delete to the owner -->
+          <a href="/comment/{{ comment.id }}/delete" class="red-text">
+            <i class="material-icons">delete</i>
+          </a>
+        {% endif %}
+      </li>
+    {% else %}
+      <li class="collection-item grey-text">Nothing here yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+Block 5 — Like/dislike buttons
+html<form method="POST" action="/track/{{ active_track.id }}/react">
+<!--                                ↑ your react route -->
+  <div style="padding:6px 10px;">
+    <button type="submit" name="action" value="like" class="btn-small green waves-effect">
+    <!--                        ↑ must match Form() param   ↑ must match if check in route -->
+      <i class="material-icons left">thumb_up</i>{{ active_track.likes }}
+      <!--                                                  ↑ your likes field -->
+    </button>
+    <button type="submit" name="action" value="dislike" class="btn-small red waves-effect" style="margin-left:6px;">
+      <i class="material-icons left">thumb_down</i>{{ active_track.dislikes }}
+    </button>
+  </div>
+</form>
+
+The Rules to Remember
+Jinja2 syntax:
+{{ variable }}           → print a value
+{% if something %}       → condition (always needs {% endif %})
+{% for x in list %}      → loop (always needs {% endfor %})
+{% else %}               → works inside both if and for
+Dot notation vs dict:
+{{ album.title }}        → use dot for DB model objects
+{{ item["name"] }}       → use square brackets for API dicts
+Forms:
+method="GET"   → search forms and filter forms
+method="POST"  → add, react, award — anything that changes data
+The name= rule:
+html<input name="text">   ← this must match exactly →   text: str = Form(...)
+<input name="rating"> ← this must match exactly →   rating: int = Form(...)
+
+How to Read the Figure in the Exam
+
+Count the columns → that's how many panels you need
+Left column = Block 1 always
+Middle column = Block 2 if there's a parent/child
+Right column = Block 3 + Block 4 for forms and lists
+If there are like/dislike buttons → add Block 5 at the top of the right panel
+
+Want to try writing the HTML for a scenario I describe to you? 💪
+
+
+Materialize is a CSS framework — it gives you pre-styled components so you don't have to write CSS from scratch. You just add class names to your HTML and it automatically makes things look good.
+
+The Two Lines That Load It
+html<!-- Icons (like the delete bin, thumbs up, etc.) -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<!-- The actual Materialize styles -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+<!-- At the bottom of body — makes interactive stuff work (dropdowns, etc.) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script>M.AutoInit();</script>
+Without these lines, none of the Materialize classes do anything.
+
+The Classes You Actually Use in the Exam
+Cards — wrapping content in a box
+html<div class="card">
+  <div class="card-content">
+    Your content here
+  </div>
+</div>
+
+<!-- Horizontal card (image on the side) -->
+<div class="card horizontal">
+  <div class="card-image">
+    <img src="...">
+  </div>
+  <div class="card-stacked">
+    <div class="card-content">text here</div>
+  </div>
+</div>
+Buttons
+html<a href="..." class="btn purple waves-effect">Big button</a>
+<a href="..." class="btn-small purple waves-effect">Small button</a>
+<a href="..." class="btn-small red waves-effect">Red button</a>
+<a href="..." class="btn-small green waves-effect">Green button</a>
+Collection list (for comments, reviews, etc.)
+html<ul class="collection">
+  <li class="collection-item">Item one</li>
+  <li class="collection-item">Item two</li>
+</ul>
+Input field (Materialize styled)
+html<div class="input-field">
+  <input type="text" id="my_input" name="text">
+  <label for="my_input">Write something...</label>
+  <!-- id= and for= must match exactly or the label floats wrong -->
+</div>
+Icons
+html<i class="material-icons">delete</i>      <!-- bin icon -->
+<i class="material-icons">thumb_up</i>    <!-- like -->
+<i class="material-icons">thumb_down</i>  <!-- dislike -->
+<i class="material-icons">search</i>      <!-- search -->
+<i class="material-icons left">thumb_up</i>  <!-- icon inside a button, left aligned -->
+Colour classes
+htmlclass="purple"        <!-- purple background -->
+class="red"           <!-- red background -->
+class="green"         <!-- green background -->
+class="grey-text"     <!-- grey text -->
+class="red-text"      <!-- red text (used for delete links) -->
+class="blue lighten-5" <!-- light blue background (used for flash messages) -->
+Grid system (dividing the page into columns)
+html<!-- Page is divided into 12 columns -->
+<div class="col s4">   <!-- takes up 4/12 = 33% on small screens -->
+<div class="col s8">   <!-- takes up 8/12 = 67% -->
+<div class="col s12">  <!-- takes up full width -->
+<!-- s = small screen, m = medium, l = large -->
+Card panel (flash message box)
+html<div class="card-panel blue lighten-5">
+  Some message here
+</div>
+
+The Things That Catch People Out
+waves-effect — always add this to buttons, it gives the ripple animation. Without it the button still works but looks plain.
+id= and for= on inputs must match — if they don't, clicking the label won't focus the input and Materialize's floating label animation breaks.
+browser-default on a select — Materialize hides native selects and replaces them with its own. In an exam just add class="browser-default" to keep the normal browser dropdown, it's much simpler.
+html<!-- Use this in exams — simple and reliable -->
+<select name="book_id" class="browser-default">
+  <option value="">Choose...</option>
+  {% for book in books %}
+    <option value="{{ book.id }}">{{ book.title }}</option>
+  {% endfor %}
+</select>
+M.AutoInit() at the bottom — this activates all Materialize components. If you forget it, dropdowns and other interactive components won't work.
+
+The Pattern You'll Write Most in the Exam
+Almost every panel follows this exact structure:
+html<div class="panel" style="width: 30%;">
+  <h6 style="padding:8px 12px; margin:0; font-weight:bold;">
+    Heading
+  </h6>
+  <div class="scroll-area">
+    {% for item in items %}
+      <div class="card">
+        <div class="card-content">
+          <p><strong>{{ item.name }}</strong></p>
+          <a href="/item/{{ item.id }}" class="btn-small purple waves-effect">View</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+That's honestly 80% of the HTML work in any exam. The rest is just forms and collection lists inside the right panel. Want me to quiz you on writing some HTML from a description? 💪
+
+
+
+
+
+
